@@ -10,6 +10,7 @@
   <select id="teamFilter"><option value="">全部商管团队</option></select>
   <select id="cat1Filter"><option value="">全部一级类目</option></select>
   <button class="btn-dl" onclick="downloadHTML()">下载筛选结果</button>
+  <button class="btn-dl" id="copyLinkBtn" style="background:#2a6049" onclick="copyFilteredLink()">复制筛选链接</button>
   <span class="count" id="countLabel"></span>
 </div>
 <div class="wrap"><table><thead><tr><th data-col="活动ID">活动ID</th><th data-col="活动标题">活动标题</th><th data-col="活动管理主体">管理主体</th><th data-col="供应商一级分类">供应商一级分类</th><th data-col="商管团队">商管团队</th><th data-col="一级类目">一级类目</th><th data-col="类目">类目</th><th>图片</th><th data-col="提报状态">提报状态</th><th data-col="创建时间">创建时间</th><th>国内链接</th><th>国外链接</th></tr></thead><tbody id="tbody"></tbody></table></div>
@@ -63,8 +64,8 @@ function initFilters(){
     vals.forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});
   });
 }
-document.getElementById('search').addEventListener('input',applyFilters);
-['ownerFilter','teamFilter','cat1Filter'].forEach(function(id){document.getElementById(id).addEventListener('change',applyFilters);});
+document.getElementById('search').addEventListener('input',function(){applyFilters();updateUrl();});
+['ownerFilter','teamFilter','cat1Filter'].forEach(function(id){document.getElementById(id).addEventListener('change',function(){applyFilters();updateUrl();});});
 document.querySelectorAll('th[data-col]').forEach(function(th){
   th.addEventListener('click',function(){
     var col=this.getAttribute('data-col');
@@ -74,6 +75,27 @@ document.querySelectorAll('th[data-col]').forEach(function(th){
     applyFilters();
   });
 });
+function updateUrl(){
+  var p=new URLSearchParams();
+  var q=document.getElementById('search').value.trim();
+  var owner=document.getElementById('ownerFilter').value;
+  var team=document.getElementById('teamFilter').value;
+  var cat=document.getElementById('cat1Filter').value;
+  if(q)p.set('q',q);
+  if(owner)p.set('owner',owner);
+  if(team)p.set('team',team);
+  if(cat)p.set('cat',cat);
+  var newUrl=location.pathname+(p.toString()?'?'+p.toString():'');
+  history.replaceState(null,'',newUrl);
+}
+function copyFilteredLink(){
+  var url=location.href;
+  var btn=document.getElementById('copyLinkBtn');
+  navigator.clipboard.writeText(url).then(function(){
+    btn.textContent='已复制!';btn.style.background='#1a7a3f';
+    setTimeout(function(){btn.textContent='复制筛选链接';btn.style.background='#2a6049';},2000);
+  }).catch(function(){prompt('复制此链接：',url);});
+}
 function downloadHTML(){
   var data=state.filtered;
   var filterDesc=[];
@@ -98,5 +120,7 @@ function downloadHTML(){
   var a=document.createElement('a');a.href=url;a.download='SPMB_filtered_'+ts+'.html';
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
-initFilters();applyFilters();
+initFilters();
+(function(){var p=new URLSearchParams(location.search);if(p.get('owner'))document.getElementById('ownerFilter').value=p.get('owner');if(p.get('team'))document.getElementById('teamFilter').value=p.get('team');if(p.get('cat'))document.getElementById('cat1Filter').value=p.get('cat');if(p.get('q'))document.getElementById('search').value=p.get('q');})();
+applyFilters();
 </script></body></html>
